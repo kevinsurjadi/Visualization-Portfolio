@@ -1,0 +1,220 @@
+---
+title: "Changing the future of Obesity"
+author: "Kevin Surjadi"
+date: '2020-11-17'
+slug: []
+categories: R
+tags:
+- Obesity
+- Health
+featured_image: /images/coconut.png
+description: Analysis show how the core drivers of obesity is really just wealth
+---
+
+Anyone who has watched Wall-E is weary of the correlation between technology and obesity. As we grow into a digital age, it has, to some extent, made us become ***lazy***.
+
+Online shopping, Uber eats, Netflix. There is almost no reason for any of us to leave the house;
+
+* *Why bother to walk to the supermarket when we have same-day delivery?*
+* *Why drive to the nearest library when we have the internet?* 
+* *Why meet up with your friends when we can FaceTime them?* 
+
+The 21st-century lifestyle has evolved to become more convenient - but at what cost? In Australia, the prevalence of obesity has been drastically increasing, with a rise of around 5 million Obese Australians since 2004 shown in ***Figure 1.1***.
+
+```{r include=FALSE}
+library(ggplot2)
+library(tidyverse)
+```
+## Australian Obesity
+
+```{r echo=FALSE}
+
+obesity <- read.csv("obesity.csv")
+obesity <- obesity %>% filter(BMI=="Overweight or Obese")
+
+ggplot(data=obesity) + 
+ geom_smooth(formula='y~x', method=loess, aes(x=Year, y=Australians, fill="Overweight or Obese"), color="#e63946", alpha=1) +
+  scale_fill_manual(name = "Legend", values = c("Overweight or Obese"="grey")) +
+  xlab("Year") +
+  ylab("People (millions)") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "right")
+  
+
+```
+***Figure 1.1: Obesity in Australia***
+
+
+Similarily, this trend isn't only something we see in Australia, but also across the globe where obesity trends have been increasing since the 1970's as seen in ***figure 1.2***.
+
+## Worldwide Obesity across Genders
+
+```{r echo=FALSE}
+library(gapminder)
+library(gganimate)
+library(gifski)
+
+world <- read.csv(file="country.csv") 
+gapminder <- gapminder
+world$gender=as.factor(world$gender)
+
+## standard ggplot2
+myPlot <- ggplot(data=world, aes(x=Mean.BMI, y=Mean.BMI3, size = Prevelance.of.Obesity)) +
+  geom_point(alpha = 0.7, show.legend = TRUE, colour="#0077b6") +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 22)) +
+  scale_x_log10() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  # Here comes the gganimate specific bits
+  labs(title = 'Year: {frame_time}', x = 'Average BMI', y = 'Prevelance of Obesity (%)') +
+  transition_time(Year) +
+  ease_aes('linear')
+
+animate(myPlot, duration = 5, fps = 20, renderer = gifski_renderer())
+anim_save("output.gif")
+  
+
+```
+***Figure 1.2: Obesity Worldwide Trend***
+
+Additionally, health comes as a big factor that alludes the dangers associated with being overweight, with higher risks to health problems that contribute to an individual's life expectancy. In fact, obesity has reached epidemic proportions globally with over 2.8 million deaths attributed to being overweight or obese. The table below highlights the number of deaths from 1990 and 2017.
+
+## Deaths caused by obesity across countries (100,000's)
+
+```{r echo=FALSE}
+library("tidyverse")
+library("DT")
+
+deaths <- read.csv(file="deaths.csv")
+
+deaths %>% 
+  datatable(colnames = c("Country","Deaths (1990)","Deaths (2017)"))
+
+```
+
+
+# Fighting the trend
+
+But how can we transition away from the growing concern? Through careful analysis, this investigation narrows down the hypothesis catalysing our understanding of how Australians can play a role in fighting this trend:
+
+* Healthy food intake
+* Unhealthy food intake
+* Relative income influencing purchases
+
+# Food Consumption
+
+To understand why Australians are becoming more obese, understanding the relative distribution of consumption based on the type of food we eat holds substantial insights. What are Australian's consuming, and what role does it play in driving obesity?
+
+## Australian food expenditure
+
+```{r include=FALSE}
+
+food_expense <- read.csv(file="food_expense.csv")
+
+library(tidyverse)
+library(hrbrthemes)
+library(circlepackeR)  
+library(data.tree)
+
+```
+
+```{r echo=FALSE}
+food_expense$pathString <- paste("world", food_expense$Food_type, food_expense$Age, sep = "/")
+population <- as.Node(food_expense)
+ 
+circlepackeR(population, size = "Expense", color_min = "hsl(56,80%,80%)", color_max = "hsl(341,30%,40%)")
+
+```
+
+***Figure 2: Food consumption in Australia***
+
+In *interrogating* the key findings in ***Figure 2***, two things stand out; firstly **(1)** the large portion of fast-food and meals-out purchased by Australians and secondly **(2)** the relatively small portion of fruit and vegetables purchased despite their importance in creating well-rounded diets.
+
+These findings stood out further when comparing the distribution of consumption against an average healthy portion size shown in ***Figure 3***, which composes of a large vegetable portion. 
+
+![***Figure 3: Portion Plate Sizes***](portion_sizes.png){width=80% height=80%}
+
+But how drastic is the low consumption of vegetables and what is the growth in fast-food consumption? When we take a look at ***figure 4***, we can see the illustrations that visualise the breakdown of vegetable consumption based on serving size over time. Furthermore, when we see the relative increase in consumption over time, it is in-line with population growth and suggests anticipated levels of consumption. In fact, the distribution ratio for vegetable consumption has remained stable across the ten years, and as such, we can conclude that although vegetable consumption has played a role in driving obesity, it isn't the only factor driving this trend. 
+
+## Fruit and vegetable consumption
+
+```{r echo=FALSE}
+library(ggplot2)
+library(dplyr)
+ 
+veg <- read.csv("veg.csv")
+
+time <- veg$Year
+value <- veg$Children            
+Legend <- veg$Number.of.serves       
+data <- data.frame(time, value, Legend)
+
+
+ggplot(data, aes(x=time, y=value, fill=Legend)) + 
+    geom_area() +
+  xlab("Year") +
+  ylab("Number of Australians (m)") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "right")
+
+
+```
+
+***Figure 4: Vegetable consumption overtime***
+
+Contrastingly, when we take a look at the fast-food intake in ***Figure 5*** and its growth relative to population, we can see an interesting trend; what we see is a figure that affirms the hypothesis stating an increase in fast-food consumption played a key role in catalysing obesity in Australia.
+
+## Fast food consumption
+
+```{r echo=FALSE}
+library(ggplot2)
+library(dplyr)
+
+fast_food <- read.csv("fast_food.csv")
+fast_food <- fast_food %>% filter(Type=="Meals out & fast foods")
+
+ggplot(data=fast_food) + 
+ geom_area(aes(x=Year, y=Expense, fill="Fast-food spending ($m)"), alpha=1) +
+  geom_area(aes(x=Year, y=Population, fill="Population (m)"),alpha =0.6) +
+  scale_fill_manual(name = "Legend", values = c("Population (m)"="#f4a261", "Fast-food spending ($m)"="#e07a5f")) +
+  ggtitle("") +
+  xlab("Year") +
+  ylab("") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position = "right")
+
+
+```
+***Figure 5: Fast food consumption vs. population***
+
+
+
+# Connecting the dots
+
+We have already affirmed that fast food consumption has been a key driver in obesity, but what's catalysing this? In comparing the average meal costs between healthy and fast food we can clearly see why. ***Figure 6*** illustrates how the average price of a McDonald's cheeseburger in 2019 was one-fifth of a salad from Woolworth's.
+
+![***Figure 6: Comparing Australian food prices***](compare.png){width=70% height=70%}
+
+With the price of healthy food in mind, we can begin investigating whether income plays a role in obesity. Fast food has increasingly been getting cheaper in relative proportion to the cost of organic food, and with the fast-paced nature of contemporary working styles, cooking healthy at home seems almost impossible. After evaluating obesity within Australian income brackets, ***Figure 7*** emphasises how the lower quintile income earners are the most obese and overweight. 
+
+## Obesity and income distribution
+
+```{r include=FALSE}
+
+socio_economic <- read.csv(file="socio_economic.csv")
+socio_economic <- socio_economic %>% filter(Status!=" Total")
+
+library(tidyverse)
+library(hrbrthemes)
+library(circlepackeR)  
+library(data.tree)
+
+```
+
+```{r echo=FALSE}
+socio_economic$pathString <- paste("world", socio_economic$Status, socio_economic$Sex, socio_economic$BMI, sep = "/")
+populations <- as.Node(socio_economic)
+ 
+circlepackeR(populations, size = "Value")
+
+```
+***Figure 7: Distribution of obesity within income brackets***
+
+In summary, there is almost no doubt that obesity has been written down as a low priority in modern-day society. After all, there are many other social issues to be addressed including sustainable energy sources and the more recent COVID pandemic. But at the same time, obesity is not another issue to be left on the back burner. My investigation highlights how obesity is more closely linked to income, deriving questions on whether its growth implies increasing poverty within countries like Australia, or if it just alludes a change in consumer behaviour. 
